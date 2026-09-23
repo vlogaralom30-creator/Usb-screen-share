@@ -38,11 +38,13 @@ jobs:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
           if [ -n "$KEYSTORE_BASE64" ]; then
-            echo "Decoding release keystore from GitHub Secrets..."
+            echo "::notice ::Release keystore found in GitHub Secrets. Setting up production release signing."
             echo "$KEYSTORE_BASE64" | base64 --decode > my-upload-key.jks
           elif [ -f "my-upload-key.jks.base64" ] && [ ! -f "my-upload-key.jks" ]; then
-            echo "Decoding release keystore from repository base64 file..."
+            echo "::notice ::Setting up release keystore from repository file."
             base64 --decode my-upload-key.jks.base64 > my-upload-key.jks
+          else
+            echo "::notice ::No release keystore secret (KEYSTORE_BASE64) provided. Build will proceed using debug signing fallback."
           fi
 
           if [ -f "debug.keystore.base64" ] && [ ! -f "debug.keystore" ]; then

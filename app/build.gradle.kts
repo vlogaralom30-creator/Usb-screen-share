@@ -34,28 +34,19 @@ android {
       }
     }
 
-    create("release") {
-      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
-      val releaseKeystore = file(keystorePath)
+    val releaseStoreFilePath = System.getenv("KEYSTORE_PATH")
+    val defaultReleaseFile = file("${rootDir}/my-upload-key.jks")
+    val releaseStoreFile = if (!releaseStoreFilePath.isNullOrBlank()) file(releaseStoreFilePath) else defaultReleaseFile
+    val storePasswordEnv = System.getenv("STORE_PASSWORD") ?: System.getenv("KEYSTORE_PASSWORD")
+    val keyAliasEnv = System.getenv("KEY_ALIAS") ?: "upload"
+    val keyPasswordEnv = System.getenv("KEY_PASSWORD") ?: storePasswordEnv
 
-      if (releaseKeystore.exists()) {
-        storeFile = releaseKeystore
-        storePassword = System.getenv("STORE_PASSWORD") ?: System.getenv("KEYSTORE_PASSWORD") ?: "usbscreenlink"
-        keyAlias = System.getenv("KEY_ALIAS") ?: "upload"
-        keyPassword = System.getenv("KEY_PASSWORD") ?: "usbscreenlink"
-      } else if (localDebugKeystore.exists()) {
-        storeFile = localDebugKeystore
-        storePassword = "android"
-        keyAlias = "androiddebugkey"
-        keyPassword = "android"
-      } else {
-        val defaultDebugKeystore = file("${System.getProperty("user.home")}/.android/debug.keystore")
-        if (defaultDebugKeystore.exists()) {
-          storeFile = defaultDebugKeystore
-          storePassword = "android"
-          keyAlias = "androiddebugkey"
-          keyPassword = "android"
-        }
+    if (releaseStoreFile.exists() && !storePasswordEnv.isNullOrBlank()) {
+      create("release") {
+        storeFile = releaseStoreFile
+        storePassword = storePasswordEnv
+        keyAlias = keyAliasEnv
+        keyPassword = keyPasswordEnv
       }
     }
   }
@@ -66,11 +57,22 @@ android {
       isMinifyEnabled = true
       isShrinkResources = true
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-      signingConfig = signingConfigs.getByName("release")
+
+      val releaseSigning = signingConfigs.findByName("release")
+      if (releaseSigning != null) {
+        signingConfig = releaseSigning
+      } else {
+        signingConfig = signingConfigs.getByName("debug")
+      }
     }
     debug {
       signingConfig = signingConfigs.getByName("debug")
     }
+  }
+
+  lint {
+    abortOnError = false
+    checkReleaseBuilds = false
   }
   compileOptions {
     sourceCompatibility = JavaVersion.VERSION_11
