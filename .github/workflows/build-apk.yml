@@ -33,17 +33,19 @@ jobs:
       - name: Grant Execute Permission to Gradle Wrapper
         run: chmod +x gradlew
 
-      - name: Setup Release Keystore from Secrets
+      - name: Setup Keystore from Secrets or Repository
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
           if [ -n "$KEYSTORE_BASE64" ]; then
             echo "Decoding release keystore from GitHub Secrets..."
             echo "$KEYSTORE_BASE64" | base64 --decode > my-upload-key.jks
-          elif [ -f "my-upload-key.jks.base64" ]; then
+          elif [ -f "my-upload-key.jks.base64" ] && [ ! -f "my-upload-key.jks" ]; then
             echo "Decoding release keystore from repository base64 file..."
             base64 --decode my-upload-key.jks.base64 > my-upload-key.jks
-          elif [ -f "debug.keystore.base64" ] && [ ! -f "debug.keystore" ]; then
+          fi
+
+          if [ -f "debug.keystore.base64" ] && [ ! -f "debug.keystore" ]; then
             echo "Decoding debug keystore from repository base64..."
             base64 --decode debug.keystore.base64 > debug.keystore
           fi

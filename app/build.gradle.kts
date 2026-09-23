@@ -24,30 +24,38 @@ android {
   }
 
   signingConfigs {
+    val localDebugKeystore = file("${rootDir}/debug.keystore")
+    if (localDebugKeystore.exists()) {
+      getByName("debug") {
+        storeFile = localDebugKeystore
+        storePassword = "android"
+        keyAlias = "androiddebugkey"
+        keyPassword = "android"
+      }
+    }
+
     create("release") {
       val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
       val releaseKeystore = file(keystorePath)
-      val debugKeystore = file("${rootDir}/debug.keystore")
 
       if (releaseKeystore.exists()) {
         storeFile = releaseKeystore
         storePassword = System.getenv("STORE_PASSWORD") ?: System.getenv("KEYSTORE_PASSWORD") ?: "usbscreenlink"
         keyAlias = System.getenv("KEY_ALIAS") ?: "upload"
         keyPassword = System.getenv("KEY_PASSWORD") ?: "usbscreenlink"
-      } else if (debugKeystore.exists()) {
-        storeFile = debugKeystore
+      } else if (localDebugKeystore.exists()) {
+        storeFile = localDebugKeystore
         storePassword = "android"
         keyAlias = "androiddebugkey"
         keyPassword = "android"
-      }
-    }
-    create("debugConfig") {
-      val debugKeystore = file("${rootDir}/debug.keystore")
-      if (debugKeystore.exists()) {
-        storeFile = debugKeystore
-        storePassword = "android"
-        keyAlias = "androiddebugkey"
-        keyPassword = "android"
+      } else {
+        val defaultDebugKeystore = file("${System.getProperty("user.home")}/.android/debug.keystore")
+        if (defaultDebugKeystore.exists()) {
+          storeFile = defaultDebugKeystore
+          storePassword = "android"
+          keyAlias = "androiddebugkey"
+          keyPassword = "android"
+        }
       }
     }
   }
@@ -60,7 +68,9 @@ android {
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
       signingConfig = signingConfigs.getByName("release")
     }
-    debug { signingConfig = signingConfigs.getByName("debugConfig") }
+    debug {
+      signingConfig = signingConfigs.getByName("debug")
+    }
   }
   compileOptions {
     sourceCompatibility = JavaVersion.VERSION_11
