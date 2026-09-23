@@ -1,0 +1,128 @@
+name: Build Android APK & Release
+
+on:
+  push:
+    branches: [ main, master ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build & Verify APKs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Grant Execute Permission to Gradle Wrapper
+        run: chmod +x gradlew
+
+      - name: Setup Release Keystore from Secrets
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "Decoding release keystore from GitHub Secrets..."
+            echo "$KEYSTORE_BASE64" | base64 --decode > my-upload-key.jks
+          elif [ -f "my-upload-key.jks.base64" ]; then
+            echo "Decoding release keystore from repository base64 file..."
+            base64 --decode my-upload-key.jks.base64 > my-upload-key.jks
+          elif [ -f "debug.keystore.base64" ] && [ ! -f "debug.keystore" ]; then
+            echo "Decoding debug keystore from repository base64..."
+            base64 --decode debug.keystore.base64 > debug.keystore
+          fi
+
+      - name: Run Unit Tests
+        run: ./gradlew testDebugUnitTest --no-daemon
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Build Release APK
+        env:
+          KEYSTORE_PATH: my-upload-key.jks
+          STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD || secrets.STORE_PASSWORD || 'usbscreenlink' }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS || 'upload' }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD || 'usbscreenlink' }}
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Prepare APK Artifacts
+        run: |
+          mkdir -p apk-artifacts
+          if [ -f "app/build/outputs/apk/debug/app-debug.apk" ]; then
+            cp "app/build/outputs/apk/debug/app-debug.apk" "apk-artifacts/USB-Screen-Link-debug.apk"
+            echo "DEBUG_APK_EXISTS=true" >> $GITHUB_ENV
+          fi
+          if [ -f "app/build/outputs/apk/release/app-release.apk" ]; then
+            cp "app/build/outputs/apk/release/app-release.apk" "apk-artifacts/USB-Screen-Link-release.apk"
+            echo "RELEASE_APK_EXISTS=true" >> $GITHUB_ENV
+          fi
+
+      - name: Verify APKs Exist
+        run: |
+          echo "Verifying generated APK files:"
+          ls -lh apk-artifacts/
+          if [ ! -f "apk-artifacts/USB-Screen-Link-debug.apk" ]; then
+            echo "ERROR: Debug APK was not generated!"
+            exit 1
+          fi
+          if [ ! -f "apk-artifacts/USB-Screen-Link-release.apk" ]; then
+            echo "ERROR: Release APK was not generated!"
+            exit 1
+          fi
+
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: USB-Screen-Link-debug
+          path: apk-artifacts/USB-Screen-Link-debug.apk
+          retention-days: 30
+
+      - name: Upload Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: USB-Screen-Link-release
+          path: apk-artifacts/USB-Screen-Link-release.apk
+          retention-days: 30
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            apk-artifacts/USB-Screen-Link-release.apk
+            apk-artifacts/USB-Screen-Link-debug.apk
+          name: USB Screen Link Release ${{ github.ref_name }}
+          body: |
+            ## USB Screen Link ${{ github.ref_name }}
+
+            ### What's Changed
+            - Hardware-accelerated USB screen streaming (Host -> Controller)
+            - Bidirectional low-latency touch & gesture control
+            - Instant USB disconnect recovery and auto-reconnect
+            - Optimized APK binary size with R8 resource shrinking
+
+            ### Installation Instructions
+            1. Download `USB-Screen-Link-release.apk` (or `USB-Screen-Link-debug.apk`)
+            2. Install the same APK on both Phone 1 (Host) and Phone 2 (Controller)
+            3. Connect both phones with a USB-C to USB-C cable
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

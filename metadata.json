@@ -1,0 +1,6 @@
+{
+  "name": "USB Screen Link",
+  "description": "High-performance USB phone-to-phone screen sharing and remote control app.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

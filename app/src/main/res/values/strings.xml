@@ -1,0 +1,47 @@
+<resources>
+    <string name="app_name">USB Screen Link</string>
+    <string name="app_tagline">Direct Phone-to-Phone Screen Sharing &amp; Remote Control</string>
+
+    <!-- Operating Modes -->
+    <string name="mode_host_title">HOST MODE</string>
+    <string name="mode_host_subtitle">Phone 1 • Screen Source &amp; Input Target</string>
+    <string name="mode_host_desc">Captures and transmits this phone\'s display over USB to the controller device, and receives remote touch/keyboard inputs.</string>
+    <string name="mode_host_start">Start Host Session</string>
+
+    <string name="mode_controller_title">CONTROLLER MODE</string>
+    <string name="mode_controller_subtitle">Phone 2 • Viewer &amp; Remote Controller</string>
+    <string name="mode_controller_desc">Renders the incoming screen feed in real time over USB with low latency, and transmits multi-touch gestures to Phone 1.</string>
+    <string name="mode_controller_start">Start Controller Session</string>
+
+    <!-- Connection Status -->
+    <string name="status_title">USB Link Status</string>
+    <string name="status_disconnected">Disconnected • No peer device detected</string>
+    <string name="status_device_detected">Device Detected • USB handshake pending</string>
+    <string name="status_requesting_permission">Requesting USB Permission…</string>
+    <string name="status_connected">Connected • High-Speed USB link active</string>
+    <string name="status_error">Connection Error</string>
+    <string name="scan_devices">Scan USB Devices</string>
+
+    <!-- Permissions -->
+    <string name="perm_title">Required Permissions</string>
+    <string name="perm_notifications">Notifications (Foreground Service status)</string>
+    <string name="perm_usb">USB Device Direct Access</string>
+    <string name="perm_screen_capture">Media Projection (Screen Capture for Host)</string>
+    <string name="perm_accessibility">Accessibility Service (Input Injection for Host)</string>
+    <string name="accessibility_service_description">Enables USB Screen Link to receive remote touch inputs (tap, long press, swipe, back) from your connected controller phone over the physical USB cable.</string>
+    <string name="remote_control_title">REMOTE CONTROL</string>
+    <string name="remote_control_active">Remote Control Active</string>
+    <string name="remote_control_stopped">Remote Control Stopped</string>
+    <string name="remote_control_enable">Enable Control</string>
+    <string name="remote_control_disable">Disable Control</string>
+    <string name="remote_control_perm_required">Phone 1 requires Accessibility Service permission to perform remote touches.</string>
+    <string name="grant_permissions">Grant Permissions</string>
+
+    <!-- Settings & Protocol -->
+    <string name="settings_title">Settings &amp; Diagnostics</string>
+    <string name="settings_resolution">Streaming Resolution</string>
+    <string name="settings_fps">Target Frame Rate</string>
+    <string name="settings_bitrate">Target Bitrate</string>
+    <string name="settings_transport">USB Transport Protocol</string>
+    <string name="settings_about_desc">USB Screen Link uses a direct hardware-level USB connection (USB OTG / Android Open Accessory or Raw Bulk Endpoints) for sub-frame video streaming and input injection without any Wi-Fi, mobile data, or cloud servers.</string>
+</resources>

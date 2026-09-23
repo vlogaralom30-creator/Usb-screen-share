@@ -1,0 +1,57 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Left Phone (Host / Source) -->
+    <path
+        android:fillColor="#1E293B"
+        android:strokeColor="#38BDF8"
+        android:strokeWidth="2"
+        android:pathData="M24,32 h18 a4,4 0 0 1 4,4 v36 a4,4 0 0 1 -4,4 h-18 a4,4 0 0 1 -4,-4 v-36 a4,4 0 0 1 4,-4 z" />
+    <!-- Left Screen Screen Inner -->
+    <path
+        android:fillColor="#0284C7"
+        android:pathData="M23,38 h20 v28 h-20 z" />
+    <path
+        android:fillColor="#BAE6FD"
+        android:pathData="M31,34 h4 v1 h-4 z" />
+
+    <!-- Right Phone (Controller / Viewer) -->
+    <path
+        android:fillColor="#1E293B"
+        android:strokeColor="#00E5FF"
+        android:strokeWidth="2"
+        android:pathData="M66,32 h18 a4,4 0 0 1 4,4 v36 a4,4 0 0 1 -4,4 h-18 a4,4 0 0 1 -4,-4 v-36 a4,4 0 0 1 4,-4 z" />
+    <!-- Right Screen Screen Inner -->
+    <path
+        android:fillColor="#0F766E"
+        android:pathData="M65,38 h20 v28 h-20 z" />
+    <path
+        android:fillColor="#5EEAD4"
+        android:pathData="M73,34 h4 v1 h-4 z" />
+
+    <!-- USB Bridge Cable connecting both phones -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#38BDF8"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:pathData="M46,54 C50,54 50,46 54,46 C58,46 58,54 62,54" />
+
+    <!-- Center USB connector badge -->
+    <path
+        android:fillColor="#00E5FF"
+        android:pathData="M51,51 h6 v6 h-6 z" />
+    <path
+        android:fillColor="#0F172A"
+        android:pathData="M53,53 h2 v2 h-2 z" />
+
+    <!-- Speed / Signal pulses -->
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M52,38 L56,38 L54,34 Z" />
+    <path
+        android:fillColor="#00E5FF"
+        android:pathData="M52,70 L56,70 L54,74 Z" />
+</vector>
