@@ -21,6 +21,7 @@ import com.example.usb.model.UsbDeviceInfo
 import com.example.usb.model.UsbRole
 import com.example.usb.transport.UsbAccessoryTransport
 import com.example.usb.transport.UsbBulkTransport
+import com.example.usb.transport.UsbSocketTransport
 import com.example.usb.transport.UsbTransport
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -53,6 +54,36 @@ class UsbConnectionManager(
         private const val AOA_GET_PROTOCOL = 51
         private const val AOA_SEND_STRING = 52
         private const val AOA_START = 53
+
+        fun isSamsung(): Boolean = Build.MANUFACTURER.contains("samsung", ignoreCase = true)
+        fun isXiaomiOrPoco(): Boolean = Build.MANUFACTURER.contains("xiaomi", ignoreCase = true) ||
+                Build.MANUFACTURER.contains("poco", ignoreCase = true) ||
+                Build.MANUFACTURER.contains("redmi", ignoreCase = true)
+
+        fun openTetheringSettings(ctx: Context) {
+            try {
+                val intent = Intent("android.settings.TETHER_SETTINGS").apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+                ctx.startActivity(intent)
+            } catch (e: Exception) {
+                try {
+                    val fallback = Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    }
+                    ctx.startActivity(fallback)
+                } catch (_: Exception) {}
+            }
+        }
+
+        fun openDeveloperSettings(ctx: Context) {
+            try {
+                val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+                ctx.startActivity(intent)
+            } catch (_: Exception) {}
+        }
     }
 
     private val usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
@@ -490,6 +521,55 @@ class UsbConnectionManager(
             Log.w(TAG, "AOA negotiation skipped/failed: ${e.message}")
             return false
         }
+    }
+
+    /**
+     * Connects via high-speed Direct Cable Network / USB Tethering Socket.
+     * Host creates server, Controller auto-discovers and connects.
+     */
+    suspend fun connectViaSocket(role: UsbRole, targetHost: String? = null): Result<UsbTransport> = withContext(Dispatchers.IO) {
+        _connectionState.value = UsbConnectionState.Connecting(
+            role,
+            if (role == UsbRole.HOST) "Starting USB Screen Host at ${UsbSocketTransport.getBestLocalIp() ?: "0.0.0.0"}:8889…" else "Connecting to Host over USB cable link…"
+        )
+
+        val result: Result<UsbTransport> = if (role == UsbRole.HOST) {
+            UsbSocketTransport.createServerTransport(
+                onListening = { ip: String ->
+                    _connectionState.value = UsbConnectionState.Connecting(role, "Host ready at $ip:8889. Waiting for Controller…")
+                }
+            ).map { it as UsbTransport }
+        } else {
+            UsbSocketTransport.createClientTransport(targetHost = targetHost).map { it as UsbTransport }
+        }
+
+        if (result.isSuccess) {
+            val transport = result.getOrThrow()
+            transport.onDisconnect = {
+                scope.launch {
+                    disconnect()
+                    refreshDevices()
+                }
+            }
+            activeTransport?.close()
+            activeTransport = transport
+
+            _connectionState.value = UsbConnectionState.Connected(
+                role = role,
+                modeName = transport.modeName,
+                peerInfo = if (role == UsbRole.HOST) "Connected Controller" else "Connected Host (${targetHost ?: "Auto-Discovered"})",
+                speed = "High-Speed Hardware Link (Ultra-Low Latency)"
+            )
+        } else {
+            val errorMsg = result.exceptionOrNull()?.localizedMessage ?: "Could not establish USB cable link"
+            _connectionState.value = UsbConnectionState.ConnectionError(
+                errorCode = "SOCKET_TIMEOUT",
+                userMessage = "$errorMsg. Tip: Please enable USB Tethering or verify cable connection.",
+                isRecoverable = true
+            )
+        }
+
+        result
     }
 
     fun disconnect() {

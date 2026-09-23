@@ -77,7 +77,11 @@ data class UsbUiState(
     val isPeerControlPermissionGranted: Boolean = false,
     val isPeerControlActive: Boolean = false,
     val remoteControlStatusText: String = "Standby",
-    val lastDispatchedAction: String? = null
+    val lastDispatchedAction: String? = null,
+
+    // Direct High-Speed Cable / USB Tethering Link State
+    val localIpAddress: String? = null,
+    val targetHostInput: String = ""
 )
 
 class UsbSessionViewModel(application: Application) : AndroidViewModel(application) {
@@ -728,6 +732,46 @@ class UsbSessionViewModel(application: Application) : AndroidViewModel(applicati
                 lastSentMessage = null
             )
         }
+    }
+
+    fun connectDirectSocket(customHost: String? = null) {
+        viewModelScope.launch {
+            val target = if (!customHost.isNullOrBlank()) customHost else _uiState.value.targetHostInput.ifBlank { null }
+            val role = if (_uiState.value.activeRole != UsbRole.NONE) _uiState.value.activeRole else UsbRole.HOST
+            _uiState.update { it.copy(statusBanner = "Initiating High-Speed Direct USB Link…") }
+            val result = usbManager.connectViaSocket(role, target)
+            if (result.isSuccess) {
+                _uiState.update {
+                    it.copy(
+                        statusBanner = "Direct USB Link connected successfully!",
+                        localIpAddress = com.example.usb.transport.UsbSocketTransport.getBestLocalIp()
+                    )
+                }
+            } else {
+                _uiState.update {
+                    it.copy(
+                        statusBanner = "Link error: ${result.exceptionOrNull()?.message ?: "Verify USB Tethering is turned ON"}"
+                    )
+                }
+            }
+        }
+    }
+
+    fun updateTargetHostInput(ip: String) {
+        _uiState.update { it.copy(targetHostInput = ip) }
+    }
+
+    fun openTetheringSettings() {
+        UsbConnectionManager.openTetheringSettings(getApplication())
+    }
+
+    fun openDeveloperSettings() {
+        UsbConnectionManager.openDeveloperSettings(getApplication())
+    }
+
+    fun refreshNetworkStatus() {
+        val bestIp = com.example.usb.transport.UsbSocketTransport.getBestLocalIp()
+        _uiState.update { it.copy(localIpAddress = bestIp) }
     }
 
     fun updateSettings(newSettings: SettingsModel) {

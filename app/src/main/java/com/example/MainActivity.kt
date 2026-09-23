@@ -102,7 +102,10 @@ class MainActivity : ComponentActivity() {
                             onConnectDevice = { device -> viewModel.connectDevice(device) },
                             onTestConnection = { viewModel.testUsbConnection() },
                             onOpenSettings = { viewModel.navigateTo(AppScreen.SETTINGS) },
-                            onDismissBanner = { viewModel.dismissBanner() }
+                            onDismissBanner = { viewModel.dismissBanner() },
+                            onOpenTethering = { viewModel.openTetheringSettings() },
+                            onInstantConnect = { viewModel.connectDirectSocket() },
+                            onOpenDeveloperSettings = { viewModel.openDeveloperSettings() }
                         )
                     }
 

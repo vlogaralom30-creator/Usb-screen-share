@@ -51,6 +51,7 @@ import com.example.R
 import com.example.ui.components.CableGuideCard
 import com.example.ui.components.ControllerModeCard
 import com.example.ui.components.HostModeCard
+import com.example.ui.components.SamsungPocoQuickSetupCard
 import com.example.ui.components.StatusCard
 import com.example.ui.theme.DarkBackground
 import com.example.ui.theme.DarkSurface
@@ -63,6 +64,7 @@ import com.example.ui.theme.ElectricBlue
 import com.example.ui.theme.ElectricCyan
 import com.example.ui.theme.StatusWarningAmber
 import com.example.ui.viewmodel.UsbUiState
+import com.example.usb.model.UsbConnectionState
 import com.example.usb.model.UsbDeviceInfo
 import com.example.usb.model.UsbRole
 
@@ -79,6 +81,9 @@ fun MainScreen(
     onTestConnection: () -> Unit,
     onOpenSettings: () -> Unit,
     onDismissBanner: () -> Unit,
+    onOpenTethering: () -> Unit = {},
+    onInstantConnect: () -> Unit = {},
+    onOpenDeveloperSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -265,6 +270,15 @@ fun MainScreen(
                 onRequestPermission = onRequestDevicePermission,
                 onConnectDevice = onConnectDevice,
                 onTestConnection = onTestConnection
+            )
+
+            // Dedicated Easy Setup for Samsung & Poco
+            SamsungPocoQuickSetupCard(
+                isConnected = uiState.connectionState is UsbConnectionState.Connected,
+                localIp = uiState.localIpAddress,
+                onOpenTethering = onOpenTethering,
+                onInstantConnect = onInstantConnect,
+                onOpenDeveloperSettings = onOpenDeveloperSettings
             )
 
             // Operating Modes Title
